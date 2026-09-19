@@ -92,4 +92,4 @@ export function generateSyntheticCohort(
   return patients;
 }
 
-export const INITIAL_SYNTHETIC_COHORT = generateSyntheticCohort(60);
+export const INITIAL_SYNTHETIC_COHORT = generateSyntheticCohort(100);

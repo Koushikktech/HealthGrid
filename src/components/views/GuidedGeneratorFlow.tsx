@@ -31,6 +31,8 @@ import {
   INITIAL_SYNTHETIC_COHORT,
   generateSyntheticCohort,
 } from '../../data/fixtures/syntheticPatients';
+import { apiClient } from '../../services/api/apiClient';
+import { exportService } from '../../services/api/exportService';
 import { ValidationPage } from './ValidationPage';
 import { CohortPassportPage } from './CohortPassportPage';
 import { CausalGenerationHUD } from '../common/CausalGenerationHUD';
@@ -367,6 +369,7 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
   const [selectedPatient, setSelectedPatient] = useState<SyntheticPatient | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+  const [isExporting, setIsExporting] = useState(false);
 
   const applySourceDefaults = (source: DatasetSummary) => {
     setConfig((current) => ({
@@ -476,8 +479,10 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
       // Ensure backend job has completed
       await backendPromise;
 
+      // Generate preview microdata (up to 250 records) for ultra-responsive table inspection
+      const previewCount = Math.min(config.targetPatients, 250);
       const generated = generateSyntheticCohort(
-        50,
+        previewCount,
         config.diabetesPct,
         config.hypertensionEnabled ? config.hypertensionPct : 0,
         config.femalePct
@@ -523,23 +528,48 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
 
   const totalPages = Math.ceil(filteredPatients.length / rowsPerPage) || 1;
 
-  // Export CSV
-  const handleExportCSV = () => {
-    const headers = 'patient_id,age,sex,bmi,systolic_bp,diastolic_bp,hba1c,fasting_glucose,diabetes,hypertension,treatment,adherence_pct,risk_tier,quarantine_status\n';
-    const rows = syntheticData
-      .map(
-        (p) =>
-          `${p.id},${p.age},${p.sex},${p.bmi},${p.systolicBP},${p.diastolicBP},${p.hba1c},${p.glucose},${p.diabetes ? '1' : '0'},${p.hypertension ? '1' : '0'},${p.treatment},${p.adherenceScore}%,${p.riskCategory},${p.quarantineStatus}`
-      )
-      .join('\n');
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `HealthGrid_Synthetic_${config.targetPatients}_patients.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Export CSV: Downloads complete target cohort (e.g. 5,000 records)
+  // Uses live backend artifact if connected, or client-side SCM generator for full target count
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      const targetCount = config.targetPatients || 5000;
+      const downloadFilename = `HealthGrid_Synthetic_${targetCount}_patients.csv`;
+
+      // 1. If connected to backend with active run, download the real backend CSV artifact
+      if (activeRunId && apiClient.getMode() === 'connected_api') {
+        const ok = await exportService.downloadArtifact(activeRunId, 'patients_csv', downloadFilename);
+        if (ok) return;
+      }
+
+      // 2. Client-side generator fallback: generate ALL targetCount records (NOT just the preview table subset)
+      const fullCohort = generateSyntheticCohort(
+        targetCount,
+        config.diabetesPct,
+        config.hypertensionEnabled ? config.hypertensionPct : 0,
+        config.femalePct
+      );
+      const headers = 'patient_id,age,sex,bmi,systolic_bp,diastolic_bp,hba1c,fasting_glucose,diabetes,hypertension,treatment,adherence_pct,risk_tier,quarantine_status\n';
+      const rows = fullCohort
+        .map(
+          (p) =>
+            `${p.id},${p.age},${p.sex},${p.bmi},${p.systolicBP},${p.diastolicBP},${p.hba1c},${p.glucose},${p.diabetes ? '1' : '0'},${p.hypertension ? '1' : '0'},${p.treatment},${p.adherenceScore}%,${p.riskCategory},${p.quarantineStatus}`
+        )
+        .join('\n');
+      const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', downloadFilename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const stepsList: { id: GeneratorStep; label: string; num: string }[] = [
@@ -1186,8 +1216,8 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
                 <h2 className="text-lg font-bold text-slate-950 dark:text-white">
                   Generated Synthetic Cohort
                 </h2>
-                <span className="font-mono text-xs text-slate-500 font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 inline-flex items-center justify-center leading-none shrink-0">
-                  {config.targetPatients.toLocaleString()} records
+                <span className="font-mono text-xs text-blue-700 dark:text-blue-400 font-semibold px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-900 inline-flex items-center justify-center leading-none shrink-0">
+                  {config.targetPatients.toLocaleString()} records generated
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -1223,10 +1253,12 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
               {/* Export Button */}
               <button
                 onClick={handleExportCSV}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-2xs shrink-0"
+                disabled={isExporting}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all shrink-0 cursor-pointer disabled:opacity-50"
+                title={`Export complete cohort of ${config.targetPatients.toLocaleString()} records as CSV`}
               >
-                <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span>Export CSV</span>
+                <Download className={`w-3.5 h-3.5 shrink-0 ${isExporting ? 'animate-bounce' : ''}`} />
+                <span>{isExporting ? 'Exporting…' : `Export All (${config.targetPatients.toLocaleString()} CSV)`}</span>
               </button>
 
               {/* Next Step to Validation Suite */}
@@ -1363,7 +1395,7 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
             {/* Pagination Controls */}
             <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
               <span>
-                Showing {(currentPage - 1) * rowsPerPage + 1}–{Math.min(currentPage * rowsPerPage, filteredPatients.length)} of {filteredPatients.length} records
+                Showing {(currentPage - 1) * rowsPerPage + 1}–{Math.min(currentPage * rowsPerPage, filteredPatients.length)} of {filteredPatients.length} preview records ({config.targetPatients.toLocaleString()} total generated in full export)
               </span>
 
               <div className="flex items-center gap-2">
