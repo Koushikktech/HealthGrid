@@ -22,11 +22,14 @@ import {
   FileCheck2,
   ChevronDown
 } from 'lucide-react';
-import { CohortConfiguration, DatasetSummary } from '../../types';
+import { CohortConfiguration, DatasetSummary, FullValidationReport } from '../../types';
 import {
   SyntheticPatient,
-  INITIAL_SYNTHETIC_COHORT
+  INITIAL_SYNTHETIC_COHORT,
+  generateSyntheticCohort,
 } from '../../data/fixtures/syntheticPatients';
+import { ValidationPage } from './ValidationPage';
+import { CohortPassportPage } from './CohortPassportPage';
 
 interface GuidedGeneratorFlowProps {
   dataset: DatasetSummary | null;
@@ -37,11 +40,14 @@ interface GuidedGeneratorFlowProps {
     datasetId: string,
     onProgress: (progress: { progress: number; stage?: string; message?: string }) => void
   ) => Promise<void>;
-  onNavigateToValidation: () => void;
+  onNavigateToValidation?: () => void;
   onNavigateToPassport?: () => void;
+  validationReport?: FullValidationReport | null;
+  activeRunId?: string;
+  isDemoMode?: boolean;
 }
 
-type GeneratorStep = 'upload' | 'parameters' | 'generating' | 'data' | 'stats';
+type GeneratorStep = 'upload' | 'parameters' | 'generating' | 'data' | 'validation' | 'passport';
 
 interface DottedSliderRowProps {
   label: string;
@@ -160,6 +166,9 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
   onStartRun,
   onNavigateToValidation,
   onNavigateToPassport,
+  validationReport,
+  activeRunId,
+  isDemoMode,
 }) => {
   const [currentStep, setCurrentStep] = useState<GeneratorStep>('upload');
   const [completedSteps, setCompletedSteps] = useState<Record<GeneratorStep, boolean>>({
@@ -167,7 +176,8 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
     parameters: false,
     generating: false,
     data: false,
-    stats: false,
+    validation: false,
+    passport: false,
   });
 
   // Step 1: Upload state
@@ -305,10 +315,17 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
         else if (['baseline', 'validating'].includes(stage)) setGenerationStage(2);
         else if (['passport', 'completed'].includes(stage)) setGenerationStage(3);
       });
+      const generated = generateSyntheticCohort(
+        50,
+        config.diabetesPct,
+        config.hypertensionEnabled ? config.hypertensionPct : 0,
+        config.femalePct
+      );
+      setSyntheticData(generated);
       setGenerationProgress(100);
       setGenerationStage(4);
-      setCompletedSteps((steps) => ({ ...steps, parameters: true, generating: true }));
-      onNavigateToValidation();
+      setCompletedSteps((steps) => ({ ...steps, parameters: true, generating: true, data: true }));
+      setCurrentStep('data');
     } catch (error) {
       setGenerationError(error instanceof Error ? error.message : 'Generation could not be started.');
       setCurrentStep('parameters');
@@ -365,8 +382,9 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
     { id: 'upload', label: 'Upload Data', num: '01' },
     { id: 'parameters', label: 'Parameters', num: '02' },
     { id: 'generating', label: 'Generating', num: '03' },
-    { id: 'data', label: 'Synthetic Data', num: '04' },
-    { id: 'stats', label: 'Stats & Validation', num: '05' },
+    { id: 'data', label: 'Synthetic CSV', num: '04' },
+    { id: 'validation', label: 'Validation Suite', num: '05' },
+    { id: 'passport', label: 'Cohort Passport', num: '06' },
   ];
 
   return (
@@ -935,15 +953,15 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
                 <span>Export CSV</span>
               </button>
 
-              {/* Next Step to Stats */}
+              {/* Next Step to Validation Suite */}
               <button
                 onClick={() => {
-                  setCompletedSteps((s) => ({ ...s, stats: true }));
-                  setCurrentStep('stats');
+                  setCompletedSteps((s) => ({ ...s, data: true, validation: true }));
+                  setCurrentStep('validation');
                 }}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-slate-950 text-white dark:bg-white dark:text-slate-950 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-xs shrink-0"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all shrink-0"
               >
-                <span>View Validation &amp; Stats</span>
+                <span>Proceed to Validation Suite</span>
                 <ArrowRight className="w-3.5 h-3.5 shrink-0" />
               </button>
             </div>
@@ -1094,6 +1112,28 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
             </div>
           </div>
 
+          {/* Step 4 Footer Navigation Strip */}
+          <div className="flex items-center justify-between pt-2">
+            <button
+              onClick={() => setCurrentStep('parameters')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-2xs"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+              <span>Back to Parameters</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setCompletedSteps((s) => ({ ...s, data: true, validation: true }));
+                setCurrentStep('validation');
+              }}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all"
+            >
+              <span>Proceed to Validation Suite</span>
+              <ArrowRight className="w-4 h-4 shrink-0" />
+            </button>
+          </div>
+
           {/* Patient Detail Modal */}
           {selectedPatient && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/70 backdrop-blur-xs">
@@ -1172,339 +1212,73 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
       )}
 
       {/* =========================================================================
-          STEP 5: Validation & Stats (Inspired by Reference Image 3)
+          STEP 5: Validation Suite
           ========================================================================= */}
-      {currentStep === 'stats' && (
+      {currentStep === 'validation' && (
         <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
-          {/* Header Banner */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                <h2 className="text-lg font-bold text-slate-950 dark:text-white">
-                  Empirical Verification Telemetry
-                </h2>
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center justify-center leading-none shrink-0">
-                  REGULATORY PASS
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Mathematical audit metrics computed against holdout real clinical data and adversarial shadow models.
-              </p>
-            </div>
+          <ValidationPage
+            report={validationReport || null}
+            onNavigateToPassport={() => {
+              setCompletedSteps((s) => ({ ...s, validation: true, passport: true }));
+              setCurrentStep('passport');
+            }}
+            onNavigateToPrivacy={() => {}}
+            isDemoMode={isDemoMode ?? false}
+          />
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setCurrentStep('data')}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
-              >
-                <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
-                <span>Return to Data Table</span>
-              </button>
-
-              <button
-                onClick={() => setCurrentStep('parameters')}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-950 text-white dark:bg-white dark:text-slate-950 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-xs shrink-0"
-              >
-                <RefreshCw className="w-3.5 h-3.5 shrink-0" />
-                <span>Re-configure Run</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Clean 6-Card Stats Grid (Matching Reference Image 3) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {/* Card 1: Kolmogorov-Smirnov Distance */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-4">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span>Distribution Fidelity / 1D Marginal</span>
-                <span className="font-mono text-[11px] font-semibold text-slate-400">KS-STAT</span>
-              </div>
-
-              <div className="flex items-end justify-between gap-2">
-                <div>
-                  <div className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950 dark:text-white tabular-nums font-mono">
-                    0.042
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Kolmogorov-Smirnov Distance
-                  </div>
-                </div>
-
-                {/* Sparkline */}
-                <div className="w-24 h-11 shrink-0">
-                  <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible">
-                    <path
-                      d="M0 12 Q 25 10, 50 18 T 80 26 T 100 32"
-                      fill="none"
-                      stroke="#10b981"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                    />
-                    <circle cx="100" cy="32" r="3" fill="#10b981" />
-                  </svg>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2.5">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0 leading-none">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>PASS (&lt;0.080)</span>
-                </span>
-                <span className="text-[11px] text-slate-500 truncate min-w-0 text-right font-medium">Holdout Validated</span>
-              </div>
-            </div>
-
-            {/* Card 2: TSTR Downstream Utility */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-4">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span>Downstream Utility / Accuracy</span>
-                <span className="font-mono text-[11px] font-semibold text-slate-400">TSTR</span>
-              </div>
-
-              <div className="flex items-end justify-between gap-2">
-                <div>
-                  <div className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950 dark:text-white tabular-nums font-mono">
-                    94.6%
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Train on Synth, Test on Real
-                  </div>
-                </div>
-
-                {/* Sparkline */}
-                <div className="w-24 h-11 shrink-0">
-                  <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible">
-                    <path
-                      d="M0 35 Q 25 25, 50 18 T 80 14 T 100 8"
-                      fill="none"
-                      stroke="#3b82f6"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                    />
-                    <circle cx="100" cy="8" r="3" fill="#3b82f6" />
-                  </svg>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2.5">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20 shrink-0 leading-none">
-                  <TrendingUp className="w-3 h-3 shrink-0" />
-                  <span>TRTR Baseline 95.2%</span>
-                </span>
-                <span className="text-[11px] text-slate-500 truncate min-w-0 text-right font-medium">Δ -0.6% Parity</span>
-              </div>
-            </div>
-
-            {/* Card 3: MIA Shadow Privacy */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-4">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span>Adversarial Privacy / Shadow MIA</span>
-                <span className="font-mono text-[11px] font-semibold text-slate-400">AUC</span>
-              </div>
-
-              <div className="flex items-end justify-between gap-2">
-                <div>
-                  <div className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950 dark:text-white tabular-nums font-mono">
-                    0.518
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Membership Inference AUC
-                  </div>
-                </div>
-
-                {/* Circular Gauge */}
-                <div className="relative w-11 h-11 shrink-0 flex items-center justify-center">
-                  <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                    <circle cx="18" cy="18" r="14" fill="none" stroke="#e2e8f0" strokeWidth="3" />
-                    <circle
-                      cx="18"
-                      cy="18"
-                      r="14"
-                      fill="none"
-                      stroke="#10b981"
-                      strokeWidth="3"
-                      strokeDasharray="88"
-                      strokeDashoffset="44"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 absolute shrink-0" />
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2.5">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0 leading-none">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>Zero Leakage</span>
-                </span>
-                <span className="text-[11px] text-slate-500 truncate min-w-0 text-right font-medium">Random Baseline ~0.50</span>
-              </div>
-            </div>
-
-            {/* Card 4: Multivariate Correlation */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-4">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span>Correlation Matrix / Frobenius</span>
-                <span className="font-mono text-[11px] font-semibold text-slate-400">Δ-NORM</span>
-              </div>
-
-              <div className="flex items-end justify-between gap-2">
-                <div>
-                  <div className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950 dark:text-white tabular-nums font-mono">
-                    0.038
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Frobenius Distance Delta
-                  </div>
-                </div>
-
-                <div className="w-24 h-11 shrink-0">
-                  <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible">
-                    <path
-                      d="M0 25 Q 30 20, 60 15 T 100 10"
-                      fill="none"
-                      stroke="#8b5cf6"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                    />
-                    <circle cx="100" cy="10" r="3" fill="#8b5cf6" />
-                  </svg>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2.5">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20 shrink-0 leading-none">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>96.8% r-SIM</span>
-                </span>
-                <span className="text-[11px] text-slate-500 truncate min-w-0 text-right font-medium">Pairwise Preserved</span>
-              </div>
-            </div>
-
-            {/* Card 5: Visit Trajectory Similarity */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-4">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span>Temporal Dynamics / Trajectory</span>
-                <span className="font-mono text-[11px] font-semibold text-slate-400">DTW</span>
-              </div>
-
-              <div className="flex items-end justify-between gap-2">
-                <div>
-                  <div className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950 dark:text-white tabular-nums font-mono">
-                    0.912
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Dynamic Time Warping Score
-                  </div>
-                </div>
-
-                <div className="w-24 h-11 shrink-0">
-                  <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible">
-                    <path
-                      d="M0 30 Q 30 22, 60 14 T 100 8"
-                      fill="none"
-                      stroke="#0ea5e9"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                    />
-                    <circle cx="100" cy="8" r="3" fill="#0ea5e9" />
-                  </svg>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2.5">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/20 shrink-0 leading-none">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>Markov Adherence</span>
-                </span>
-                <span className="text-[11px] text-slate-500 truncate min-w-0 text-right font-medium">12-Week Concordance</span>
-              </div>
-            </div>
-
-            {/* Card 6: Zero Duplicate Quarantine */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-4">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span>Quarantine Audit / Duplicates</span>
-                <span className="font-mono text-[11px] font-semibold text-slate-400">DCR</span>
-              </div>
-
-              <div className="flex items-end justify-between gap-2">
-                <div>
-                  <div className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950 dark:text-white tabular-nums font-mono">
-                    0 Flagged
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Near-Duplicate Records
-                  </div>
-                </div>
-
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2.5">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0 leading-none">
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span>100% Verified</span>
-                </span>
-                <span className="text-[11px] text-slate-500 truncate min-w-0 text-right font-medium">&gt;2.8σ Minimum Distance</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Cards (Matching bottom row in Reference Image 3) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
-            <div
-              onClick={handleExportCSV}
-              className="p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:border-slate-400 cursor-pointer transition-all flex items-center justify-between group"
+          {/* Step 5 Bottom Navigation Bar */}
+          <div className="flex items-center justify-between pt-6 border-t border-slate-200/80 dark:border-slate-800">
+            <button
+              onClick={() => setCurrentStep('data')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-2xs"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
-                  <Download className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-white">Download CSV Cohort</div>
-                  <div className="text-[11px] text-slate-500">5,000 synthetic patient rows</div>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
-            </div>
-
-            <div
-              onClick={() => onNavigateToPassport && onNavigateToPassport()}
-              className="p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:border-slate-400 cursor-pointer transition-all flex items-center justify-between group"
+              <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+              <span>Back to Synthetic CSV</span>
+            </button>
+            <button
+              onClick={() => {
+                setCompletedSteps((s) => ({ ...s, validation: true, passport: true }));
+                setCurrentStep('passport');
+              }}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all hover:shadow-md"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
-                  <FileCheck2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-white">Cryptographic Passport</div>
-                  <div className="text-[11px] text-slate-500">SHA-256 certificate PDF</div>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
-            </div>
+              <span>Proceed to Cohort Passport</span>
+              <ArrowRight className="w-4 h-4 shrink-0" />
+            </button>
+          </div>
+        </div>
+      )}
 
-            <div
+      {/* =========================================================================
+          STEP 6: Cohort Passport
+          ========================================================================= */}
+      {currentStep === 'passport' && (
+        <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
+          <CohortPassportPage
+            runId={activeRunId || 'HG-2026-001'}
+            validationReport={validationReport || null}
+            isDemoMode={isDemoMode ?? false}
+            onBack={() => setCurrentStep('validation')}
+          />
+
+          {/* Step 6 Bottom Navigation Bar */}
+          <div className="flex items-center justify-between pt-6 border-t border-slate-200/80 dark:border-slate-800">
+            <button
+              onClick={() => setCurrentStep('validation')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-2xs"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+              <span>Back to Validation Suite</span>
+            </button>
+            <button
               onClick={() => {
                 setCurrentStep('parameters');
               }}
-              className="p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:border-slate-400 cursor-pointer transition-all flex items-center justify-between group"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-950 text-white dark:bg-white dark:text-slate-950 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-xs"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                  <RefreshCw className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-white">New Synthesis Job</div>
-                  <div className="text-[11px] text-slate-500">Re-tune parameters &amp; priors</div>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
-            </div>
+              <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+              <span>Configure New Cohort</span>
+            </button>
           </div>
         </div>
       )}

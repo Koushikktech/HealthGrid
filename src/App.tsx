@@ -340,6 +340,9 @@ export function App() {
                 onStartRun={handleStartGeneration}
                 onNavigateToValidation={() => setCurrentSection('validation')}
                 onNavigateToPassport={() => setCurrentSection('cohort_passport')}
+                validationReport={validationReport}
+                activeRunId={activeRunId}
+                isDemoMode={dataMode === 'demo_preview'}
               />
             )}
 
