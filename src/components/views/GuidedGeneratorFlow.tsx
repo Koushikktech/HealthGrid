@@ -490,11 +490,9 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
       setSyntheticData(generated);
       setGenerationProgress(100);
       setGenerationStage(4);
+      setGenerationMessage(`Cohort synthesis complete. ${config.targetPatients.toLocaleString()} verified trajectories generated.`);
       setCompletedSteps((steps) => ({ ...steps, parameters: true, generating: true, data: true }));
-
-      // Brief satisfaction pause at 100% before transition to synthetic CSV viewer
-      await new Promise((resolve) => setTimeout(resolve, 450));
-      setCurrentStep('data');
+      // Do not auto-advance: presenter will click "Next: View Synthetic CSV" at their own pace.
     } catch (error) {
       setGenerationError(error instanceof Error ? error.message : 'Generation could not be started.');
       setCurrentStep('parameters');
@@ -1194,13 +1192,60 @@ export const GuidedGeneratorFlow: React.FC<GuidedGeneratorFlowProps> = ({
           STEP 3: High-Tech Telemetry & Animated DAG Topographical HUD (~6.5s)
           ========================================================================= */}
       {currentStep === 'generating' && (
-        <CausalGenerationHUD
-          progress={generationProgress}
-          stage={generationStage}
-          message={generationMessage}
-          config={config}
-          datasetName={activeDataset?.name}
-        />
+        <div className="space-y-6">
+          <CausalGenerationHUD
+            progress={generationProgress}
+            stage={generationStage}
+            message={generationMessage}
+            config={config}
+            datasetName={activeDataset?.name}
+            onProceed={() => {
+              setCompletedSteps((steps) => ({ ...steps, parameters: true, generating: true, data: true }));
+              setCurrentStep('data');
+            }}
+          />
+
+          {/* Dedicated Bottom Action Bar when Generation Completes */}
+          {generationProgress >= 100 && (
+            <div className="bg-white dark:bg-slate-900 border border-emerald-500/40 dark:border-emerald-500/30 rounded-3xl p-6 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="font-bold text-sm text-slate-950 dark:text-white flex items-center gap-2">
+                    <span>Physiological Cohort Synthesis Complete</span>
+                    <span className="font-mono text-[11px] text-emerald-700 dark:text-emerald-300 font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                      100% DAG Verified
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {config.targetPatients.toLocaleString()} patient trajectories generated with AHA/NHANES physiological equations and Differential Privacy (ε=0.5).
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setCurrentStep('parameters')}
+                  className="px-4 py-2.5 rounded-full border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-2xs"
+                >
+                  Adjust Parameters
+                </button>
+                <button
+                  onClick={() => {
+                    setCompletedSteps((steps) => ({ ...steps, parameters: true, generating: true, data: true }));
+                    setCurrentStep('data');
+                  }}
+                  className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm tracking-wide transition-all shadow-md hover:shadow-lg active:scale-95 cursor-pointer shrink-0"
+                >
+                  <span>Next: View Synthetic CSV</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* =========================================================================
