@@ -127,10 +127,14 @@ async function getLivePassport(runId: string, purpose: PurposeProfile): Promise<
     : 70;
   const holdoutRatio = 100 - trainRatio;
 
+  const miaFormatted = typeof results.validation?.mia_auc?.value === 'number'
+    ? results.validation.mia_auc.value.toFixed(4)
+    : (results.validation?.mia_auc?.value ?? 'not assessable');
+
   const notes = [
     'Technical Evidence Only: this Passport reports quantitative statistical and empirical privacy evidence for the declared purpose.',
     'No Automatic Legal Certification: synthetic generation does not automatically establish legal anonymization. Assess the applicable DPDP, HIPAA, GDPR, ethics, and institutional requirements.',
-    `Membership inference AUC: ${results.validation?.mia_auc?.value ?? 'not assessable'}.`,
+    `Membership inference AUC: ${miaFormatted}.`,
     `Near-duplicate quarantine: ${quarantine.initial_flagged_count ?? 0} initially flagged; ${quarantine.unresolved_count ?? 0} unresolved after enforcement.`,
   ];
   if (diabetesTarget !== null && diabetesTarget !== undefined) {

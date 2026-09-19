@@ -36,6 +36,13 @@ function currentResults(): any | null {
   return activeResultsRunId ? backendResultsByRun.get(activeResultsRunId) ?? null : null;
 }
 
+function roundMetric(val: any, decimals = 4): number | null {
+  if (val === null || val === undefined || val === '') return null;
+  const num = typeof val === 'number' ? val : Number(val);
+  if (isNaN(num)) return null;
+  return Number(num.toFixed(decimals));
+}
+
 function mapBackendToValidationReport(data: any): FullValidationReport {
   const v = data.validation || {};
   const g = data.generation || {};
@@ -47,25 +54,27 @@ function mapBackendToValidationReport(data: any): FullValidationReport {
     ? v.fidelity.intervention_aware
     : v.fidelity?.raw;
   const fidelityDetails = selectedFidelity?.details || {};
-  const miaVal = v.mia_auc?.status === 'computed' ? v.mia_auc.value : null;
-  const rdcrVal = v.rdcr?.status === 'computed' ? v.rdcr.value : null;
+  const miaVal = v.mia_auc?.status === 'computed' ? roundMetric(v.mia_auc.value) : null;
+  const rdcrVal = v.rdcr?.status === 'computed' ? roundMetric(v.rdcr.value) : null;
   const c2stMetric = v.c2st?.intervention_aware?.status === 'computed'
     ? v.c2st.intervention_aware
     : v.c2st?.raw;
-  const c2stVal = c2stMetric?.status === 'computed' ? c2stMetric.value : null;
+  const c2stVal = c2stMetric?.status === 'computed' ? roundMetric(c2stMetric.value) : null;
   const ksVal = fidelityDetails.numeric_ks?.status === 'computed'
-    ? fidelityDetails.numeric_ks.value
+    ? roundMetric(fidelityDetails.numeric_ks.value)
     : null;
   const correlationDelta = fidelityDetails.correlation_delta?.status === 'computed'
-    ? fidelityDetails.correlation_delta.value
+    ? roundMetric(fidelityDetails.correlation_delta.value)
     : null;
-  const wassersteinValue = v.target_attainment?.details?.metrics?.age_histogram?.details?.wasserstein_years ?? null;
+  const wassersteinValue = v.target_attainment?.details?.metrics?.age_histogram?.details?.wasserstein_years != null
+    ? roundMetric(v.target_attainment.details.metrics.age_histogram.details.wasserstein_years)
+    : null;
   const tstrMetrics = v.tstr?.details?.metrics || {};
-  const tstrGapVal = v.tstr_gap?.status === 'computed' ? v.tstr_gap.value : null;
-  const tstrAuc = tstrMetrics.tstr_auc?.status === 'computed' ? tstrMetrics.tstr_auc.value : null;
-  const trtrAuc = tstrMetrics.trtr_auc?.status === 'computed' ? tstrMetrics.trtr_auc.value : null;
+  const tstrGapVal = v.tstr_gap?.status === 'computed' ? roundMetric(v.tstr_gap.value) : null;
+  const tstrAuc = tstrMetrics.tstr_auc?.status === 'computed' ? roundMetric(tstrMetrics.tstr_auc.value) : null;
+  const trtrAuc = tstrMetrics.trtr_auc?.status === 'computed' ? roundMetric(tstrMetrics.trtr_auc.value) : null;
   const importanceAgreement = tstrMetrics.feature_importance_spearman?.status === 'computed'
-    ? tstrMetrics.feature_importance_spearman.value
+    ? roundMetric(tstrMetrics.feature_importance_spearman.value)
     : null;
 
   let overallStatus: FullValidationReport['overallStatus'] = 'PASS';

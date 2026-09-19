@@ -126,7 +126,9 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
           <div className="p-4 glass-card rounded-2xl border-slate-200/60 dark:border-white/5 text-xs">
-            <span className="font-bold text-slate-900 dark:text-white block mb-1.5 text-sm">MIA AUC: {privacy.membershipInferenceAUC.value ?? '—'}</span>
+            <span className="font-bold text-slate-900 dark:text-white block mb-1.5 text-sm">
+              MIA AUC: {typeof privacy.membershipInferenceAUC.value === 'number' ? privacy.membershipInferenceAUC.value.toFixed(4) : (privacy.membershipInferenceAUC.value ?? '—')}
+            </span>
             <p className="text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
               Target is 0.50 (random chance). A score of 0.51 indicates that an adversary cannot distinguish training participants
               from unseen holdout patients using shadow inference models.

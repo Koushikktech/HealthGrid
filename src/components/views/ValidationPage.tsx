@@ -192,7 +192,7 @@ export const ValidationPage: React.FC<ValidationPageProps> = ({
               <div className="mt-4 flex flex-wrap gap-2">
                 {report.verdictGates.map((gate) => (
                   <span key={gate.metric} className="glass-pill rounded-full px-3 py-1 text-[11px] font-mono">
-                    {gate.metric.replace(/_/g, ' ')}: {gate.value === null ? 'N/A' : String(gate.value)} · {gate.result.toUpperCase()}
+                    {gate.metric.replace(/_/g, ' ')}: {gate.value === null ? 'N/A' : (typeof gate.value === 'number' ? (Number.isInteger(gate.value) ? gate.value : gate.value.toFixed(4)) : String(gate.value))} · {gate.result.toUpperCase()}
                   </span>
                 ))}
               </div>

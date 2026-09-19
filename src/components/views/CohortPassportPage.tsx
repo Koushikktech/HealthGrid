@@ -30,6 +30,21 @@ interface CohortPassportPageProps {
   onBack?: () => void;
 }
 
+const formatMetricNumber = (val: any, digits = 4): string => {
+  if (val === null || val === undefined || val === '') return 'Awaiting';
+  const num = typeof val === 'number' ? val : Number(val);
+  if (isNaN(num)) return String(val);
+  if (Number.isInteger(num)) return num.toLocaleString();
+  return num.toFixed(digits);
+};
+
+const cleanComplianceNote = (note: string): string => {
+  return note.replace(/(\d+\.\d{5,})/g, (match) => {
+    const n = parseFloat(match);
+    return isNaN(n) ? match : n.toFixed(4);
+  });
+};
+
 export const CohortPassportPage: React.FC<CohortPassportPageProps> = ({
   runId,
   validationReport,
@@ -223,7 +238,7 @@ export const CohortPassportPage: React.FC<CohortPassportPageProps> = ({
                 {passportData.verdictGates.map((gate) => (
                   <tr key={gate.metric}>
                     <td className="p-3 font-semibold">{gate.metric.replace(/_/g, ' ')}</td>
-                    <td className="p-3 font-mono">{gate.value === null ? 'not assessable' : String(gate.value)}</td>
+                    <td className="p-3 font-mono">{gate.value === null ? 'not assessable' : formatMetricNumber(gate.value, 4)}</td>
                     <td className="p-3 font-mono">{gate.threshold}</td>
                     <td className="p-3"><StatusBadge status={gate.result.toUpperCase() as CohortPassportData['purposeVerdict']} size="sm" /></td>
                   </tr>
@@ -292,10 +307,13 @@ export const CohortPassportPage: React.FC<CohortPassportPageProps> = ({
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-            <div className="p-4 glass-card rounded-2xl border-slate-200/60 dark:border-white/5">
-              <div className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold">Holdout KS Divergence</div>
-              <div className="text-lg font-bold text-slate-900 dark:text-white my-1 font-mono tracking-tight">
-                {isCalculated ? validationReport?.fidelity.ksStatistic.value : 'Awaiting'}
+            <div className="p-4 glass-card rounded-2xl border-slate-200/60 dark:border-white/5 overflow-hidden">
+              <div className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Holdout KS Divergence</div>
+              <div
+                className="text-lg font-bold text-slate-900 dark:text-white my-1 font-mono tracking-tight truncate"
+                title={isCalculated && validationReport?.fidelity.ksStatistic.value !== null ? String(validationReport?.fidelity.ksStatistic.value) : undefined}
+              >
+                {isCalculated ? formatMetricNumber(validationReport?.fidelity.ksStatistic.value, 4) : 'Awaiting'}
               </div>
               <StatusBadge
                 status={isCalculated ? validationReport?.fidelity.ksStatistic.status || 'NOT_CALCULATED' : 'NOT_CALCULATED'}
@@ -303,10 +321,13 @@ export const CohortPassportPage: React.FC<CohortPassportPageProps> = ({
               />
             </div>
 
-            <div className="p-4 glass-card rounded-2xl border-slate-200/60 dark:border-white/5">
-              <div className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold">TSTR AUROC Predictive Gap</div>
-              <div className="text-lg font-bold text-slate-900 dark:text-white my-1 font-mono tracking-tight">
-                {isCalculated ? validationReport?.utility.aurocDifference.value : 'Awaiting'}
+            <div className="p-4 glass-card rounded-2xl border-slate-200/60 dark:border-white/5 overflow-hidden">
+              <div className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">TSTR AUROC Predictive Gap</div>
+              <div
+                className="text-lg font-bold text-slate-900 dark:text-white my-1 font-mono tracking-tight truncate"
+                title={isCalculated && validationReport?.utility.aurocDifference.value !== null ? String(validationReport?.utility.aurocDifference.value) : undefined}
+              >
+                {isCalculated ? formatMetricNumber(validationReport?.utility.aurocDifference.value, 4) : 'Awaiting'}
               </div>
               <StatusBadge
                 status={isCalculated ? validationReport?.utility.aurocDifference.status || 'NOT_CALCULATED' : 'NOT_CALCULATED'}
@@ -314,10 +335,13 @@ export const CohortPassportPage: React.FC<CohortPassportPageProps> = ({
               />
             </div>
 
-            <div className="p-4 glass-card rounded-2xl border-slate-200/60 dark:border-white/5">
-              <div className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold">Adversarial MIA Attack AUC</div>
-              <div className="text-lg font-bold text-slate-900 dark:text-white my-1 font-mono tracking-tight">
-                {isCalculated ? validationReport?.privacy.membershipInferenceAUC.value : 'Awaiting'}
+            <div className="p-4 glass-card rounded-2xl border-slate-200/60 dark:border-white/5 overflow-hidden">
+              <div className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Adversarial MIA Attack AUC</div>
+              <div
+                className="text-lg font-bold text-slate-900 dark:text-white my-1 font-mono tracking-tight truncate"
+                title={isCalculated && validationReport?.privacy.membershipInferenceAUC.value !== null ? String(validationReport?.privacy.membershipInferenceAUC.value) : undefined}
+              >
+                {isCalculated ? formatMetricNumber(validationReport?.privacy.membershipInferenceAUC.value, 4) : 'Awaiting'}
               </div>
               <StatusBadge
                 status={isCalculated ? validationReport?.privacy.membershipInferenceAUC.status || 'NOT_CALCULATED' : 'NOT_CALCULATED'}
@@ -325,9 +349,9 @@ export const CohortPassportPage: React.FC<CohortPassportPageProps> = ({
               />
             </div>
 
-            <div className="p-4 glass-card rounded-2xl border-slate-200/60 dark:border-white/5">
-              <div className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold">Quarantined Near-Duplicates</div>
-              <div className="text-lg font-bold text-slate-900 dark:text-white my-1 font-mono tracking-tight">
+            <div className="p-4 glass-card rounded-2xl border-slate-200/60 dark:border-white/5 overflow-hidden">
+              <div className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold truncate">Quarantined Near-Duplicates</div>
+              <div className="text-lg font-bold text-slate-900 dark:text-white my-1 font-mono tracking-tight truncate">
                 {isCalculated ? `${validationReport?.privacy.flaggedNearDuplicates ?? 0} records` : 'Awaiting'}
               </div>
               <StatusBadge
@@ -364,8 +388,8 @@ export const CohortPassportPage: React.FC<CohortPassportPageProps> = ({
           </h3>
           <ul className="space-y-1.5 list-disc pl-5 text-slate-700 dark:text-slate-300 font-normal">
             {passportData.complianceConsiderations.notes.map((note, idx) => (
-              <li key={idx} className="leading-relaxed">
-                {note}
+              <li key={idx} className="leading-relaxed break-words">
+                {cleanComplianceNote(note)}
               </li>
             ))}
           </ul>
