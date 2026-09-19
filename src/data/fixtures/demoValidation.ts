@@ -6,7 +6,7 @@ import {
 } from '../../types';
 
 export const DEMO_EXTRAPOLATION_ASSESSMENT: ExtrapolationAssessment = {
-  overallRisk: 'MODERATE',
+  overallRisk: 'HIGH',
   status: 'EXTRAPOLATION_REVIEW_REQUIRED',
   densityRatio: 3.42,
   supportOverlapScore: 71.4,
@@ -25,7 +25,7 @@ export const DEMO_EXTRAPOLATION_ASSESSMENT: ExtrapolationAssessment = {
       observedBaseline: '8.0% diabetic (n=105 in sample)',
       riskLevel: 'high',
       score: 78,
-      note: 'Significant covariate shift (7.5x increase). HealthGrid causal propagation propagated BP shifts via clinically seeded mechanisms rather than resampling identical rows.',
+      note: 'Significant covariate shift (7.5x increase). HealthGrid SCM propagation propagated BP shifts via clinically seeded mechanisms rather than resampling identical rows.',
     },
     {
       dimension: 'Medication adherence (75%)',
@@ -502,7 +502,9 @@ export function evaluateFitnessForPurpose(
     temporalPass,
     extrapolationPass,
     rationale:
-      nearDups > 0
+      verdict === 'FAIL'
+        ? 'HARD FAIL: Extrapolation risk is HIGH (60% diabetic target vs 8% observed sample). External publication policy prohibits unvalidated covariate shifts beyond source support.'
+        : nearDups > 0
         ? `Conditional status: While MIA attack resistance is solid (AUC 0.51), ${nearDups} near-duplicate records must be reviewed or excluded before external distribution.`
         : 'Meets rigorous standards for scientific dissemination.',
   };

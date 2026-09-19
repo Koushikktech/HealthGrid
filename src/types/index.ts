@@ -17,6 +17,10 @@ export interface DatasetSummary {
   status: 'Profiled' | 'Ready' | 'Raw' | 'Error';
   description?: string;
   isDemoFixture?: boolean;
+  sourceDiabetesPct?: number;
+  sourceHypertensionPct?: number;
+  sourceFemalePct?: number;
+  supportsHypertension?: boolean;
 }
 
 export interface ColumnSchema {
@@ -49,6 +53,7 @@ export interface CohortConfiguration {
   minAge: number;
   maxAge: number;
   diabetesPct: number;
+  hypertensionEnabled: boolean;
   hypertensionPct: number;
   malePct: number;
   femalePct: number;
@@ -92,6 +97,11 @@ export interface GenerationRun {
   status: 'Validated' | 'Review' | 'Generating' | 'Failed' | 'Queued';
   executionTimeSec: number | null;
   cohortConfig: CohortConfiguration;
+  progress?: number;
+  stage?: string;
+  message?: string;
+  stageTimings?: Record<string, number>;
+  rawResult?: any;
 }
 
 export interface ValidationMetricItem {
@@ -145,6 +155,10 @@ export interface PrivacyValidation {
 
 export interface FullValidationReport {
   isCalculated: boolean;
+  generator?: 'causal_scm' | 'gaussian_copula';
+  hasComparison?: boolean;
+  request?: Record<string, any>;
+  verdictGates?: Array<{ metric: string; value: unknown; threshold: string; result: string }>;
   overallStatus: StatusVerdict;
   summaryExplanation: string;
   fidelity: FidelityValidation;
@@ -156,7 +170,7 @@ export interface FullValidationReport {
 
 export interface TemporalTrajectoryPoint {
   week: number;
-  realSBPMean: number;
+  realSBPMean: number | null;
   syntheticSBPMean: number | null;
   baselineCopulaSBPMean?: number | null;
   syntheticSBPMin?: number;
@@ -177,6 +191,13 @@ export interface CohortPassportData {
   selectedPurpose: PurposeProfile;
   purposeVerdict: StatusVerdict;
   verdictRationale: string;
+  verdictGates?: Array<{
+    metric: string;
+    value: unknown;
+    threshold: string;
+    result: string;
+  }>;
+  verdictWarnings?: string[];
   holdoutSplitRatio: string;
   auditTrail: {
     datasetProfiledAt: string;

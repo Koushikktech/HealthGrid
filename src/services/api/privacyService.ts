@@ -1,5 +1,6 @@
 import { apiClient } from './apiClient';
 import { PrivacyValidation, FlaggedRecord } from '../../types';
+import { validationService } from './validationService';
 import { DEMO_VALIDATION_REPORT, UNCALCULATED_VALIDATION_REPORT } from '../../data/fixtures/demoValidation';
 
 export const privacyService = {
@@ -8,9 +9,10 @@ export const privacyService = {
     isDemo: boolean;
   }> {
     try {
-      const res = await apiClient.get<PrivacyValidation>(`/privacy/report/${runId}`);
-      return { privacy: res.data, isDemo: false };
-    } catch {
+      const res = await validationService.getValidationReport(runId);
+      return { privacy: res.report.privacy, isDemo: res.isDemo };
+    } catch (error) {
+      if (apiClient.getMode() !== 'demo_preview') throw error;
       if (runId === 'uncalculated' || runId === 'pending') {
         return { privacy: UNCALCULATED_VALIDATION_REPORT.privacy, isDemo: true };
       }
@@ -22,14 +24,10 @@ export const privacyService = {
     recordId: string,
     status: FlaggedRecord['quarantineStatus']
   ): Promise<{ success: boolean; recordId: string; newStatus: string }> {
-    try {
-      const res = await apiClient.post<{ success: boolean; recordId: string; newStatus: string }>(
-        `/privacy/flagged-records/${recordId}/status`,
-        { status }
-      );
-      return res.data;
-    } catch {
-      return { success: true, recordId, newStatus: status };
+    if (apiClient.getMode() === 'connected_api') {
+      throw new Error('Manual quarantine status mutation is not supported by the backend API.');
     }
+    return { success: true, recordId, newStatus: status };
   },
 };
+

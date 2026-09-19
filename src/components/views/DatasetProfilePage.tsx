@@ -62,23 +62,23 @@ export const DatasetProfilePage: React.FC<DatasetProfilePageProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="p-1.5 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors"
+            className="p-2 rounded-xl glass-pill hover:bg-white/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-xs"
             title="Back to Datasets"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">{dataset.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{dataset.name}</h1>
               <StatusBadge status={dataset.status} size="sm" />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
               {dataset.patientCount.toLocaleString()} patients • {dataset.visitCount.toLocaleString()} visits • {dataset.featureCount} variables
             </p>
           </div>
@@ -86,7 +86,7 @@ export const DatasetProfilePage: React.FC<DatasetProfilePageProps> = ({
 
         <button
           onClick={() => onBuildCohort(dataset.id)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold transition-colors shadow-xs"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
         >
           <Sliders className="w-3.5 h-3.5" />
           <span>Configure Cohort Generator</span>
@@ -95,71 +95,71 @@ export const DatasetProfilePage: React.FC<DatasetProfilePageProps> = ({
 
       {/* Data Quality Metrics */}
       <div>
-        <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-3">
           Data Quality Assessment
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg border border-slate-200">
-            <div className="text-xs text-slate-500 mb-1">Missing Values</div>
-            <div className="text-xl font-bold text-slate-900 tabular-nums">2.4%</div>
-            <div className="text-[11px] text-emerald-700 mt-1 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Within 5% threshold
+          <div className="glass-card p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs hover:shadow-md transition-all">
+            <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Missing Values</div>
+            <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">2.4%</div>
+            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Within 5% threshold
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg border border-slate-200">
-            <div className="text-xs text-slate-500 mb-1">Duplicate Records</div>
-            <div className="text-xl font-bold text-slate-900 tabular-nums">0</div>
-            <div className="text-[11px] text-emerald-700 mt-1 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Zero exact duplicates
+          <div className="glass-card p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs hover:shadow-md transition-all">
+            <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Duplicate Records</div>
+            <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">0</div>
+            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Zero exact duplicates
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg border border-slate-200">
-            <div className="text-xs text-slate-500 mb-1">Potential Identifiers</div>
-            <div className="text-xl font-bold text-slate-900 tabular-nums">1 column</div>
-            <div className="text-[11px] text-slate-500 mt-1">
+          <div className="glass-card p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs hover:shadow-md transition-all">
+            <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Potential Identifiers</div>
+            <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">1 col</div>
+            <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 truncate font-medium">
               patient_id (pseudonymized)
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg border border-slate-200">
-            <div className="text-xs text-slate-500 mb-1">Date Coverage</div>
-            <div className="text-sm font-bold text-slate-900 mt-1">2024-01 to 2025-11</div>
-            <div className="text-[11px] text-slate-500 mt-1">22.4 months span</div>
+          <div className="glass-card p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs hover:shadow-md transition-all">
+            <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Date Coverage</div>
+            <div className="text-sm font-bold text-slate-900 dark:text-white mt-1">2024-01 to 2025-11</div>
+            <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 font-medium">22.4 months span</div>
           </div>
         </div>
       </div>
 
-      {/* Tabs: Schema, Distributions, Relationships */}
-      <div className="border-b border-slate-200">
-        <div className="flex space-x-6 text-xs font-semibold">
+      {/* Tabs: Apple Segmented Pill */}
+      <div className="flex items-center">
+        <div className="glass-panel p-1 rounded-full inline-flex gap-1 border border-slate-200/80 dark:border-slate-700/70 shadow-xs">
           <button
             onClick={() => setActiveTab('schema')}
-            className={`pb-3 border-b-2 transition-colors ${
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold inline-flex items-center justify-center leading-none shrink-0 transition-all ${
               activeTab === 'schema'
-                ? 'border-blue-600 text-blue-800 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50'
             }`}
           >
             Schema &amp; Variables ({schema.length})
           </button>
           <button
             onClick={() => setActiveTab('distributions')}
-            className={`pb-3 border-b-2 transition-colors ${
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold inline-flex items-center justify-center leading-none shrink-0 transition-all ${
               activeTab === 'distributions'
-                ? 'border-blue-600 text-blue-800 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50'
             }`}
           >
             Observed Distributions
           </button>
           <button
             onClick={() => setActiveTab('relationships')}
-            className={`pb-3 border-b-2 transition-colors ${
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold inline-flex items-center justify-center leading-none shrink-0 transition-all ${
               activeTab === 'relationships'
-                ? 'border-blue-600 text-blue-800 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50'
             }`}
           >
             Correlation Heatmap
@@ -169,39 +169,39 @@ export const DatasetProfilePage: React.FC<DatasetProfilePageProps> = ({
 
       {/* Tab Content 1: Schema Table */}
       {activeTab === 'schema' && (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
-                  <th className="py-2.5 px-4">Column</th>
-                  <th className="py-2.5 px-4">Type</th>
-                  <th className="py-2.5 px-4 text-right">Missing</th>
-                  <th className="py-2.5 px-4 text-right">Unique</th>
-                  <th className="py-2.5 px-4">Observed Range / Values</th>
-                  <th className="py-2.5 px-4">Clinical Description</th>
+                <tr className="bg-slate-50/70 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px]">
+                  <th className="py-3.5 px-5">Column</th>
+                  <th className="py-3.5 px-4">Type</th>
+                  <th className="py-3.5 px-4 text-right">Missing</th>
+                  <th className="py-3.5 px-4 text-right">Unique</th>
+                  <th className="py-3.5 px-4">Observed Range / Values</th>
+                  <th className="py-3.5 px-5">Clinical Description</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {schema.map((col, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/70">
-                    <td className="py-2.5 px-4 font-mono font-medium text-slate-900">
+                  <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                    <td className="py-3.5 px-5 font-mono font-semibold text-slate-900 dark:text-white">
                       {col.name}
                       {col.isTarget && (
-                        <span className="ml-2 text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-sans font-semibold">
+                        <span className="ml-2 text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-sans font-semibold shrink-0 inline-flex items-center justify-center leading-none">
                           Endpoint
                         </span>
                       )}
                     </td>
-                    <td className="py-2.5 px-4">
-                      <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono">
+                    <td className="py-3.5 px-4">
+                      <span className="text-[11px] px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-medium shrink-0 inline-flex items-center justify-center leading-none">
                         {col.type}
                       </span>
                     </td>
-                    <td className="py-2.5 px-4 text-right font-mono text-slate-700">{col.missingPct}%</td>
-                    <td className="py-2.5 px-4 text-right font-mono text-slate-700">{col.uniqueCount}</td>
-                    <td className="py-2.5 px-4 font-mono text-slate-800 text-[11px]">{col.observedRange}</td>
-                    <td className="py-2.5 px-4 text-slate-600 text-[11px]">{col.description}</td>
+                    <td className="py-3.5 px-4 text-right font-mono text-slate-700 dark:text-slate-300 font-medium">{col.missingPct}%</td>
+                    <td className="py-3.5 px-4 text-right font-mono text-slate-700 dark:text-slate-300 font-medium">{col.uniqueCount}</td>
+                    <td className="py-3.5 px-4 font-mono text-slate-800 dark:text-slate-200 text-[11px] font-medium">{col.observedRange}</td>
+                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-[11px] font-normal">{col.description}</td>
                   </tr>
                 ))}
               </tbody>
@@ -212,21 +212,21 @@ export const DatasetProfilePage: React.FC<DatasetProfilePageProps> = ({
 
       {/* Tab Content 2: Observed Distributions */}
       {activeTab === 'distributions' && (
-        <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
+        <div className="glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 space-y-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80 dark:border-slate-800">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Empirical Variable Distributions</h3>
-              <p className="text-xs text-slate-500">Univariate histograms observed in the baseline sample</p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Empirical Variable Distributions</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">Univariate histograms observed in the baseline sample</p>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="glass-panel p-1 rounded-full inline-flex gap-1 border border-slate-200/80 dark:border-slate-700/70 shadow-xs">
               {(['age', 'sbp', 'bmi', 'activity', 'adherence'] as const).map((feat) => (
                 <button
                   key={feat}
                   onClick={() => setSelectedChartFeature(feat)}
-                  className={`px-2.5 py-1 rounded text-xs uppercase font-semibold transition-colors ${
+                  className={`px-3 py-1 rounded-full text-xs uppercase font-semibold inline-flex items-center justify-center leading-none shrink-0 transition-all ${
                     selectedChartFeature === feat
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50'
                   }`}
                 >
                   {feat}
@@ -242,9 +242,9 @@ export const DatasetProfilePage: React.FC<DatasetProfilePageProps> = ({
                 <XAxis dataKey="bucket" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} />
                 <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', fontSize: '11px', borderRadius: '4px' }}
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', fontSize: '11px', borderRadius: '8px' }}
                 />
-                <Bar dataKey="realCount" name="Observed Count" fill="#2563eb" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="realCount" name="Observed Count" fill="#2563eb" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -253,10 +253,10 @@ export const DatasetProfilePage: React.FC<DatasetProfilePageProps> = ({
 
       {/* Tab Content 3: Correlation Heatmap */}
       {activeTab === 'relationships' && (
-        <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
+        <div className="glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 space-y-5 shadow-sm">
           <div>
-            <h3 className="text-sm font-bold text-slate-900">Empirical Pearson Correlation Matrix</h3>
-            <p className="text-xs text-slate-500">Pairwise correlation coefficients across continuous variables</p>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Empirical Pearson Correlation Matrix</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">Pairwise correlation coefficients across continuous variables</p>
           </div>
 
           <div className="overflow-x-auto">
@@ -265,7 +265,7 @@ export const DatasetProfilePage: React.FC<DatasetProfilePageProps> = ({
                 <tr>
                   <th className="p-2"></th>
                   {DEMO_CORRELATION_FEATURES.map((feat) => (
-                    <th key={feat} className="p-2 font-bold text-slate-700 text-[11px] w-20">
+                    <th key={feat} className="p-2 font-bold text-slate-700 dark:text-slate-300 text-[11px] w-20">
                       {feat}
                     </th>
                   ))}
@@ -274,32 +274,32 @@ export const DatasetProfilePage: React.FC<DatasetProfilePageProps> = ({
               <tbody>
                 {DEMO_REAL_CORR_MATRIX.map((row, rowIdx) => (
                   <tr key={rowIdx}>
-                    <td className="p-2 font-bold text-slate-700 text-left text-[11px]">
+                    <td className="p-2 font-bold text-slate-700 dark:text-slate-300 text-left text-[11px]">
                       {DEMO_CORRELATION_FEATURES[rowIdx]}
                     </td>
                     {row.map((val, colIdx) => {
                       const isSelf = rowIdx === colIdx;
-                      let bg = 'bg-slate-50';
-                      let text = 'text-slate-700';
+                      let bg = 'bg-slate-50 dark:bg-slate-800/50';
+                      let text = 'text-slate-700 dark:text-slate-300';
 
                       if (!isSelf) {
                         if (val > 0.3) {
-                          bg = 'bg-blue-100';
-                          text = 'text-blue-900 font-bold';
+                          bg = 'bg-blue-100 dark:bg-blue-900/50';
+                          text = 'text-blue-900 dark:text-blue-200 font-bold';
                         } else if (val > 0.1) {
-                          bg = 'bg-blue-50';
-                          text = 'text-blue-800';
+                          bg = 'bg-blue-50 dark:bg-blue-950/40';
+                          text = 'text-blue-800 dark:text-blue-300';
                         } else if (val < -0.3) {
-                          bg = 'bg-rose-100';
-                          text = 'text-rose-900 font-bold';
+                          bg = 'bg-rose-100 dark:bg-rose-900/50';
+                          text = 'text-rose-900 dark:text-rose-200 font-bold';
                         } else if (val < -0.1) {
-                          bg = 'bg-rose-50';
-                          text = 'text-rose-800';
+                          bg = 'bg-rose-50 dark:bg-rose-950/40';
+                          text = 'text-rose-800 dark:text-rose-300';
                         }
                       }
 
                       return (
-                        <td key={colIdx} className={`p-2 font-mono text-[11px] ${bg} ${text} border border-white`}>
+                        <td key={colIdx} className={`p-2.5 font-mono text-[11px] rounded-sm ${bg} ${text} border border-white/50 dark:border-slate-800`}>
                           {val.toFixed(2)}
                         </td>
                       );
@@ -309,12 +309,12 @@ export const DatasetProfilePage: React.FC<DatasetProfilePageProps> = ({
               </tbody>
             </table>
           </div>
-          <div className="text-[11px] text-slate-500 flex items-center justify-center gap-6 pt-2">
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 bg-blue-100 border border-blue-200 inline-block"></span> Positive Association
+          <div className="text-[11px] text-slate-600 dark:text-slate-400 flex items-center justify-center gap-6 pt-2 font-medium">
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 bg-blue-100 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-sm inline-block"></span> Positive Association
             </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 bg-rose-100 border border-rose-200 inline-block"></span> Inverse Association
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 bg-rose-100 dark:bg-rose-900 border border-rose-200 dark:border-rose-700 rounded-sm inline-block"></span> Inverse Association
             </span>
           </div>
         </div>
